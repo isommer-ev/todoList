@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <label for="title">ToDoList</label>
+            <input type="text" @keyup.enter="submit($event)" placeholder="添加ToDo" id="title">
+        </header>
+        <section>
+            <h2>正在进行... <span>{{todoText.length}}</span></h2>
+            <todotxt v-for="(item,index) in todoText" :item="item" :index="index" @deletetext="deletetext" @finishtext="finishtext" :key="item.id"></todotxt>
+            <h2>已经完成 <span>{{didText.length}}</span></h2>
+            <todotxt v-for="(item,index) in didText" :item="item" :index="index" @deletetext="deletefinish" @finishtext="continuetext" :key="item.id" class="test"></todotxt>
+        </section>
+    </div>
+
+    <template id="content">
+        <div class="text_box">
+            <input type="checkbox" id="check" @change="finish(index)">
+            <p>{{item.content}}</p>
+            <span @click="deletetxt(index)" class="delete">X</span> 
+        </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+        let todotxt={
+            template:"#content",
+            props:["item","index"],
+            methods:{
+                deletetxt(index){
+                    this.$emit("deletetext",index)
+                },
+                finish(index){
+                    this.$emit("finishtext",index)
+                }
+            }
+        }
+
+        var vm=new Vue({
+            el:"#app",
+            data:{
+                id:0,
+                todoText:[],
+                didText:[]
+            },
+            methods:{
+                submit(e){
+                    (e.target.value) && (this.todoText.push({id:this.id++,content:e.target.value}));
+                    e.target.value="";
+                    localStorage.setItem("todo",JSON.stringify(this.todoText))
+                },
+                deletetext(index){
+                    this.todoText.splice(index,1);
+                    localStorage.setItem("todo",JSON.stringify(this.todoText))
+                },
+                deletefinish(index){
+                    this.didText.splice(index,1);
+                    localStorage.setItem("did",JSON.stringify(this.didText))
+                },
+                finishtext(index){
+                    this.didText.push(this.todoText[index]);
+                    this.todoText.splice(index,1); 
+                    localStorage.setItem("did",JSON.stringify(this.didText)) 
+                    localStorage.setItem("todo",JSON.stringify(this.todoText))
+                },
+                continuetext(index){
+                    this.todoText.push(this.didText[index]);
+                    this.didText.splice(index,1)
+                    localStorage.setItem("todo",JSON.stringify(this.todoText))
+                    localStorage.setItem("did",JSON.stringify(this.didText))
+                },
+                loadComments(){//从本地的localStorage中获取数据
+                    this.todoText=JSON.parse(localStorage.getItem("todo") || "[]");
+                    this.didText=JSON.parse(localStorage.getItem("did") || "[]");
+                }
+            },
+            created(){
+                this.loadComments()
+            },
+            components:{
+                todotxt
+            }
+        })
+    </script>
+</body>
+</html>
